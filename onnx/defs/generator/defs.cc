@@ -143,6 +143,117 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+
+static const char* ConstantFill_ver9_doc = R"DOC(
+Generate a tensor with given value and shape.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ConstantFill,
+    9,
+    OpSchema()
+        .SetDoc(ConstantFill_ver9_doc)
+        .Attr(
+            "value",
+            "(Optional) The value of the output elements."
+            "Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32",
+            AttributeProto::TENSOR,
+            OPTIONAL)
+        .Input(
+            0,
+            "input",
+            "1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor of shape specified by 'input'."
+            "If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'."
+            "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
+            "defaults to float32.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int64)"},
+            "Constrain input types.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain output types to be numerics.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getAttribute("value") != nullptr) {
+            propagateElemTypeFromDtypeToOutput(
+                ctx, ctx.getAttribute("value"), 0);
+          } else {
+            propagateElemTypeFromDtypeToOutput(ctx, TensorProto::FLOAT, 0);
+          }
+
+          // Shape inference based on input shape
+          auto final_output_shape =
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const TensorProto* targetShapeInitializer = ctx.getInputData(0);
+          if (!targetShapeInitializer) {
+            // This is the case when exact shape input is not available.
+            // In this case, if the number of dimensions can be infered 
+            // from the input 'shape' tensor, then we add the same number
+            // of dimensions (without any dim_value information) to the output.
+            if (ctx.getInputType(0)->tensor_type().has_shape()) {
+                auto& input_shape = getInputShape(ctx, 0);
+                auto input_shape_dim_size = input_shape.dim_size();
+                if(input_shape_dim_size > 1) {
+                    fail_shape_inference("Shape input must be a one-dimensional tensor.");
+                }
+                if (input_shape.dim(0).has_dim_value()) {
+                    const auto& input_shape_dim_value = input_shape.dim(0).dim_value();
+                    if (input_shape_dim_value > 0) {
+                        for (int i = 0; i < input_shape_dim_value; ++i) {
+                            auto newdim = final_output_shape->add_dim();
+                            (void)(newdim); // To eliminate "unused variable" compiler warning.
+                        }
+                    }
+                }
+            }
+            return;
+          }
+
+          // This is the second case when exact shape data is available.
+          // In this case, we extract the shape values from input tensor
+          // and create output tensor of that shape.
+          // First, extract target shape value.
+          std::vector<int64_t> targetShape;
+          if (targetShapeInitializer->has_raw_data()) {
+            const std::string& bytes = targetShapeInitializer->raw_data();
+            targetShape.insert(
+                targetShape.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+          } else {
+            const auto& data = targetShapeInitializer->int64_data();
+            targetShape.insert(targetShape.end(), data.begin(), data.end());
+          }
+          // Next, set output shape to the target shape.
+          for (const int64_t& targetShapeElem : targetShape) {
+            if(targetShapeElem > 0) {
+              auto* new_dim = final_output_shape->add_dim();
+              new_dim->set_dim_value(targetShapeElem);
+            } else {
+              // Check if value is less than -1; fail if so
+              fail_shape_inference("Invalid shape value: ", targetShapeElem);
+            }
+          }
+        }));
+
 static const char* EyeLike_ver9_doc = R"DOC(
 Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
 tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the

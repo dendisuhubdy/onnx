@@ -470,6 +470,7 @@ class OpSet_Onnx_ver8 {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, BatchNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Compress);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, ConstantOfShape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, ConstantFill);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, EyeLike);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Greater);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Less);
@@ -507,6 +508,8 @@ class OpSet_Onnx_ver9 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Compress)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 9, ConstantOfShape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 9, ConstantFill)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, EyeLike)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Greater)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Less)>());

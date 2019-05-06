@@ -1183,6 +1183,49 @@ expect(node, inputs=[], outputs=[values],
 
 </details>
 
+### ConstantFill
+There are 2 test cases, listed as following:
+<details>
+<summary>float_ones</summary>
+
+```python
+x = np.array([4, 3, 2])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantFill',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+
+y = np.ones(x, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_float_ones')
+```
+
+</details>
+
+<details>
+<summary>int32_zeros</summary>
+
+```python
+x = np.array([10, 6])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [0])
+node = onnx.helper.make_node(
+    'ConstantFill',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_zeros')
+```
+
+</details>
+
 
 ### ConstantOfShape
 There are 2 test cases, listed as following:
@@ -1206,6 +1249,7 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
 <details>
 <summary>int32_zeros</summary>
 
